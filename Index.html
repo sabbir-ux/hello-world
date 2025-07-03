@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BD Income Tax Calculator (2024–25)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #000;
+      padding: 16px;
+      max-width: 720px;
+      margin: auto;
+      font-size: 0.95rem;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.dark-mode {
+      background-color: #121212;
+      color: #e0e0e0;
+    }
+    h2, h3 {
+      text-align: center;
+    }
+    label, select, input {
+      display: block;
+      width: 100%;
+      margin-bottom: 12px;
+    }
+    input[type="number"], select {
+      padding: 8px;
+      font-size: 1rem;
+    }
+    .error-message {
+      color: red;
+      font-size: 0.85rem;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px;
+      font-size: 1rem;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #result {
+      background: white;
+      padding: 15px;
+      border-radius: 5px;
+      color: #000;
+      overflow-x: auto;
+    }
+    body.dark-mode #result {
+      background: #1e1e1e;
+      color: #fff;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 7px 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #eee;
+    }
+    body.dark-mode th {
+      background-color: #333;
+    }
+    footer {
+      text-align: center;
+      margin-top: 25px;
+      font-size: 0.75rem;
+    }
+    #dark-mode-toggle {
+      text-align: right;
+      margin-bottom: 10px;
+    }
+    #form.collapsed {
+      display: none;
+    }
+    #toggleFormBtn {
+      background-color: #6c757d;
+    }
+    @media screen and (max-width: 600px) {
+      body {
+        font-size: 0.85rem;
+        padding: 10px;
+      }
+      button {
+        font-size: 0.95rem;
+      }
+      table {
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div id="dark-mode-toggle">
+  <label><input type="checkbox" id="toggleDark"> Dark Mode</label>
+</div>
+
+<h2>Bangladesh Income Tax Calculator (2024–25)</h2>
+
+<div id="form">
+  <label for="monthly">Monthly Gross Salary:</label>
+  <input type="number" id="monthly" placeholder="e.g. 60000" min="0" />
+
+  <label for="basicPercent">Basic Salary Percentage (% of Gross):</label>
+  <input type="number" id="basicPercent" placeholder="e.g. 50" min="0" max="100" />
+
+  <label for="pfPercent">Provident Fund Percentage (% of Basic):</label>
+  <input type="number" id="pfPercent" placeholder="e.g. 10" min="0" max="100" />
+
+  <label for="otherAllowance">Other Allowance (Monthly):</label>
+  <input type="number" id="otherAllowance" placeholder="Optional" min="0" />
+
+  <label for="otherIncome">Other Annual Income (if any):</label>
+  <input type="number" id="otherIncome" placeholder="Optional" min="0" />
+
+  <label for="category">Select Category:</label>
+  <select id="category">
+    <option value="male">Male</option>
+    <option value="female">Female / Age 65+</option>
+    <option value="third_gender">Third Gender / Person with Disability</option>
+    <option value="freedom_fighter">Gazetted Freedom Fighter / July Uprising Fighter</option>
+  </select>
+
+  <div id="error-message" class="error-message"></div>
+  <button onclick="calculateTax()" id="calcBtn">Calculate Tax</button>
+</div>
+
+<button id="toggleFormBtn" onclick="toggleForm()" style="display:none">Edit Inputs</button>
+
+<div id="result"></div>
+
+<footer>
+  Prepared by <a href="https://www.linkedin.com/in/sabbir-hossain-sust/" target="_blank">Sabbir Hossain</a>
+</footer>
+
+<script>
+  function formatNum(n) {
+    return Math.round(n).toLocaleString('en-BD');
+  }
+
+  function toggleForm() {
+    const form = document.getElementById("form");
+    const toggleBtn = document.getElementById("toggleFormBtn");
+    form.classList.toggle("collapsed");
+    toggleBtn.textContent = form.classList.contains("collapsed") ? "Edit Inputs" : "Hide Inputs";
+  }
+
+  document.getElementById('toggleDark').addEventListener('change', function () {
+    document.body.classList.toggle('dark-mode', this.checked);
+  });
+
+  function calculateTax() {
+    document.getElementById("error-message").textContent = "";
+    const monthly = parseFloat(document.getElementById("monthly").value);
+    const basicPercent = parseFloat(document.getElementById("basicPercent").value);
+    const pfPercent = parseFloat(document.getElementById("pfPercent").value);
+    const otherAllowance = parseFloat(document.getElementById("otherAllowance").value) || 0;
+    const otherIncome = parseFloat(document.getElementById("otherIncome").value) || 0;
+    const category = document.getElementById("category").value;
+
+    if (isNaN(monthly) || isNaN(basicPercent) || isNaN(pfPercent)) {
+      document.getElementById("error-message").textContent = "❗ Please fill in all required fields correctly.";
+      return;
+    }
+
+    const slabs = {
+      male: [375000, 300000, 400000, 500000, 2000000],
+      female: [425000, 300000, 400000, 500000, 2000000],
+      third_gender: [500000, 300000, 400000, 500000, 2000000],
+      freedom_fighter: [525000, 300000, 400000, 500000, 2000000]
+    };
+    const rates = [0, 0.10, 0.15, 0.20, 0.25, 0.30];
+
+    const basic = monthly * (basicPercent / 100);
+    const annualGross = monthly * 12;
+    const bonus = basic * 2;
+    const pf = (basic * (pfPercent / 100)) * 12;
+    const allowance = otherAllowance * 12;
+    const totalIncome = annualGross + bonus + pf + allowance + otherIncome;
+
+    const exemption = Math.min(totalIncome / 3, 500000);
+    const taxableIncome = Math.max(totalIncome - exemption, 0);
+
+    let remaining = taxableIncome;
+    let tax = 0;
+    let breakdown = "";
+    slabs[category].forEach((limit, index) => {
+      if (remaining <= 0) return;
+      const applicable = Math.min(remaining, limit);
+      if (applicable > 0) {
+        const slabTax = applicable * rates[index];
+        tax += slabTax;
+        breakdown += `<tr><td>Slab ${index+1}</td><td>${formatNum(applicable)}</td><td>${formatNum(slabTax)}</td></tr>`;
+        remaining -= applicable;
+      }
+    });
+    if (remaining > 0) {
+      const slabTax = remaining * rates[rates.length - 1];
+      tax += slabTax;
+      breakdown += `<tr><td>Slab ${rates.length}</td><td>${formatNum(remaining)}</td><td>${formatNum(slabTax)}</td></tr>`;
+    }
+
+    const investmentCap = Math.min(taxableIncome * 0.03, 1000000);
+    const taxAfterRebate = Math.max(tax - investmentCap, (taxableIncome <= slabs[category][0] ? 0 : 5000));
+    const maxRebate = Math.max(tax - taxAfterRebate, 0);
+    const requiredInvestment = Math.max(maxRebate / 0.15, 0);
+    const invested = pf * 2;
+    const additionalInvestment = Math.max(requiredInvestment - invested, 0);
+
+    document.getElementById("toggleFormBtn").style.display = 'block';
+    document.getElementById("form").classList.add("collapsed");
+
+    document.getElementById("result").innerHTML = `
+      <h3>Slab-wise Tax Breakdown</h3>
+      <table>
+        <thead><tr><th>Slab</th><th>Taxable Income</th><th>Tax</th></tr></thead>
+        <tbody>${breakdown}</tbody>
+      </table>
+      <h3>Tax Calculation Summary</h3>
+      <table>
+        <tr><td>Total Annual Income</td><td>${formatNum(totalIncome)}</td></tr>
+        <tr><td>Taxable Income</td><td>${formatNum(taxableIncome)}</td></tr>
+        <tr><td>Annual Tax Before Rebate</td><td>${formatNum(tax)}</td></tr>
+        <tr><td>Max Rebate Allowed</td><td>${formatNum(maxRebate)}</td></tr>
+        <tr><td>Required Investment for Max Rebate</td><td>${formatNum(requiredInvestment)}</td></tr>
+        <tr><td>Invested as PF (Double)</td><td>${formatNum(invested)}</td></tr>
+        <tr><td>Required Additional Investment</td><td>${formatNum(additionalInvestment)}</td></tr>
+        <tr><td>Final Annual Tax Payable</td><td>${formatNum(taxAfterRebate)}</td></tr>
+        <tr><td>Monthly Tax Payable</td><td>${formatNum(taxAfterRebate / 12)}</td></tr>
+      </table>
+    `;
+  }
+</script>
+
+</body>
+</html>
